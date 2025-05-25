@@ -173,6 +173,34 @@ export default class RecipeGrabber extends Plugin {
       return !isNaN(Date.parse(d));
     }
 
+    const recipeMdIngredient = (ingredient: string): string => {
+      const units = [
+        'teaspoon', 'teaspoons', 'tsp', 'tablespoon', 'tablespoons', 'tbsp',
+        'fluid ounce', 'fluid ounces', 'fl oz', 'cup', 'cups', 'pint', 'pints',
+        'quart', 'quarts', 'gallon', 'gallons', 'ml', 'milliliter', 'milliliters',
+        'l', 'liter', 'liters', 'dl', 'deciliter', 'deciliters', 'oz', 'ounce',
+        'ounces', 'lb', 'pound', 'pounds', 'mg', 'milligram', 'milligrams', 'g',
+        'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'mm', 'millimeter',
+        'millimeters', 'cm', 'centimeter', 'centimeters', 'm', 'meter', 'meters',
+        'inch', 'inches'
+      ];
+      const spelledOutNumbers = 'one|two|three|four|five|six|seven|eight|nine|ten';
+      const fraction = '\\d+\\/\\d+';
+      const number = `\\d+(?:\\.\\d+)?`;
+      const quantity = `(?:(?:${number}|${fraction}|${spelledOutNumbers})(?:\\s*-?\\s*${number}|${fraction})?)`;
+      const unit = units.join('|');
+      const quantityUnitRegex = new RegExp(`^\\s*(${quantity})\\s*(${unit})?\\s*(?:\\([^)]*\\))?`, 'i');
+
+      return ingredient.replace(quantityUnitRegex, (match, quantity, unit) => {
+        if (quantity) {
+          return `*${quantity}${unit ? ' ' + unit : ''}*`;
+        }
+        return match;
+      });
+    };
+
+    // Format ingredients to RecipeMD standard (v2.4.0, see recipemd.org/specification)
+    handlebars.registerHelper("recipeMdIngredient", recipeMdIngredient)
     handlebars.registerHelper("magicTime", function (arg1, arg2) {
       if (typeof arg1 === "undefined") {
         // catch undefined / empty
